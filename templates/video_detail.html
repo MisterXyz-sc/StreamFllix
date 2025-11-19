@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}{{ video.title }} - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8"><!-- Video Preview -->
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <div class="ratio ratio-16x9">
+            <!-- VIDEO THUMBNAIL (UPDATED) -->
+            <video preload="metadata" class="thumbnail-video" style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="{{ video.embed_url }}" type="video/mp4">
+                Your browser does not support video tag.
+            </video>
+        </div>
+    </div>
+</div>
+          
+
+            <!-- Video Info -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="h3 fw-bold">{{ video.title }}</h1>
+                        {% if video.is_premium %}
+                        <span class="badge bg-warning fs-6">
+                            <i class="bi bi-star-fill me-1"></i>Premium
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success fs-6">
+                            <i class="bi bi-unlock me-1"></i>Gratis
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        {% if video.is_premium %}
+                            <p class="h5 text-warning">
+                                 Rp {{ "%.0f"|format(video.price) }}
+                            </p>
+                            <p class="text-muted">Akses berlaku 48 jam setelah pembelian</p>
+                        {% else %}
+                            <p class="h5 text-success">Gratis untuk ditonton</p>
+                            <p class="text-muted">Tonton sekarang tanpa biaya</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Premium Features -->
+                    {% if video.is_premium %}
+                    <div class="premium-features mb-4">
+                        <h6 class="fw-bold mb-3 text-warning">
+                            <i class="bi bi-stars me-2"></i>Fitur Premium:
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-success rounded-circle p-2 me-3">
+                                        <i class="bi bi-download text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Bisa Didownload</h6>
+                                        <p class="text-muted small mb-0">Tonton offline tanpa koneksi internet</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-primary rounded-circle p-2 me-3">
+                                        <i class="bi bi-badge-ad text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Bebas Iklan</h6>
+                                        <p class="text-muted small mb-0">Pengalaman menonton tanpa gangguan</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-info rounded-circle p-2 me-3">
+                                        <i class="bi bi-hd text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Kualitas HD</h6>
+                                        <p class="text-muted small mb-0">Resolusi tinggi untuk pengalaman terbaik</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-warning rounded-circle p-2 me-3">
+                                        <i class="bi bi-phone text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Akses Multi-Device</h6>
+                                        <p class="text-muted small mb-0">Tonton di berbagai perangkat</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Free Video Features -->
+                    <div class="free-features mb-4">
+                        <h6 class="fw-bold mb-3 text-success">
+                            <i class="bi bi-info-circle me-2"></i>Fitur Video Gratis:
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-secondary rounded-circle p-2 me-3">
+                                        <i class="bi bi-download text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Tidak Bisa Didownload</h6>
+                                        <p class="text-muted small mb-0">Hanya bisa ditonton online</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-secondary rounded-circle p-2 me-3">
+                                        <i class="bi bi-badge-ad text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Mungkin Ada Iklan</h6>
+                                        <p class="text-muted small mb-0">Iklan mungkin muncul selama penayangan</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-success rounded-circle p-2 me-3">
+                                        <i class="bi bi-play-circle text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Akses Langsung</h6>
+                                        <p class="text-muted small mb-0">Tonton segera tanpa pembayaran</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon bg-success rounded-circle p-2 me-3">
+                                        <i class="bi bi-infinity text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Akses Selamanya</h6>
+                                        <p class="text-muted small mb-0">Tidak ada batas waktu menonton</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Video Description -->
+                    {% if video.description %}
+                    <div class="video-description mb-4">
+                        <h6 class="fw-bold mb-2">Deskripsi Video:</h6>
+                        <p class="text-muted">{{ video.description }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Button -->
+                    <div class="d-grid gap-2">
+                        {% if video.is_premium %}
+                            {% if current_user.is_authenticated %}
+                                {% set has_access = namespace(value=false) %}
+                                {% for access in current_user.accesses %}
+                                    {% if access.video_id == video.id %}
+                                        <!-- PERBAIKAN: Hilangkan timezone info untuk comparison -->
+                                        {% if access.expires_at.replace(tzinfo=None) > now.replace(tzinfo=None) %}
+                                            {% set has_access.value = true %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if has_access.value %}
+                                    <a href="{{ url_for('video.watch', video_id=video.id) }}" 
+                                       class="btn btn-success btn-lg py-3">
+                                        <i class="bi bi-play-circle me-2"></i>Tonton Sekarang
+                                    </a>
+                                    <div class="text-center">
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Anda sudah memiliki akses video ini
+                                        </small>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-warning btn-lg py-3" 
+                                            data-bs-toggle="modal" data-bs-target="#purchaseModal">
+                                        <i class="bi bi-play-circle me-2"></i>Beli & Tonton Sekarang
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <button type="button" class="btn btn-warning btn-lg py-3" 
+                                        data-bs-toggle="modal" data-bs-target="#purchaseModal">
+                                    <i class="bi bi-play-circle me-2"></i>Beli & Tonton Sekarang
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('video.watch', video_id=video.id) }}" 
+                               class="btn btn-primary btn-lg py-3">
+                                <i class="bi bi-play-circle me-2"></i>Tonton Sekarang
+                            </a>
+                            <div class="text-center mt-2">
+                                <small class="text-success">
+                                    <i class="bi bi-lightning me-1"></i>
+                                    Akses langsung tanpa biaya
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- User Info Card -->
+            {% if current_user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="bi bi-wallet2 display-6 text-primary mb-3"></i>
+                    <h5 class="card-title">Saldo Anda</h5>
+                    <h3 class="text-primary fw-bold">Rp {{ "%.0f"|format(current_user.wallet_balance) }}</h3>
+                    <a href="{{ url_for('payment.wallet') }}" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="bi bi-plus-circle me-1"></i>Top Up Saldo
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Video Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informasi Video</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td><i class="bi bi-calendar me-2 text-muted"></i></td>
+                            <td class="text-muted">Ditambahkan</td>
+                            <td>{{ video.created_at.strftime('%d %b %Y') }}</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-tag me-2 text-muted"></i></td>
+                            <td class="text-muted">Kategori</td>
+                            <td>
+                                {% if video.is_premium %}
+                                    <span class="badge bg-warning">Premium</span>
+                                {% else %}
+                                    <span class="badge bg-success">Gratis</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-cash-coin me-2 text-muted"></i></td>
+                            <td class="text-muted">Harga</td>
+                            <td class="{{ 'text-warning fw-bold' if video.is_premium else 'text-success' }}">
+                                {{ 'Rp %.0f'|format(video.price) if video.is_premium else 'Gratis' }}
+                            </td>
+                        </tr>
+                        {% if video.is_premium %}
+                        <tr>
+                            <td><i class="bi bi-clock me-2 text-muted"></i></td>
+                            <td class="text-muted">Durasi Akses</td>
+                            <td class="text-info">48 Jam</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-download me-2 text-muted"></i></td>
+                            <td class="text-muted">Download</td>
+                            <td class="text-success">Tersedia</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-badge-ad me-2 text-muted"></i></td>
+                            <td class="text-muted">Iklan</td>
+                            <td class="text-success">Tidak Ada</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td><i class="bi bi-clock me-2 text-muted"></i></td>
+                            <td class="text-muted">Durasi Akses</td>
+                            <td class="text-success">Selamanya</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-download me-2 text-muted"></i></td>
+                            <td class="text-muted">Download</td>
+                            <td class="text-muted">Tidak Tersedia</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-badge-ad me-2 text-muted"></i></td>
+                            <td class="text-muted">Iklan</td>
+                            <td class="text-warning">Mungkin Ada</td>
+                        </tr>
+                        <tr>
+                            <td><i class="bi bi-lightning me-2 text-muted"></i></td>
+                            <td class="text-muted">Akses</td>
+                            <td class="text-success">Langsung</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Benefits Card -->
+            <div class="card {{ 'border-warning' if video.is_premium else 'border-success' }}">
+                <div class="card-header {{ 'bg-warning text-dark' if video.is_premium else 'bg-success text-white' }}">
+                    <h6 class="mb-0">
+                        <i class="bi bi-{{ 'award' if video.is_premium else 'gift' }} me-2"></i>
+                        {{ 'Keuntungan Premium' if video.is_premium else 'Keuntungan Gratis' }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if video.is_premium %}
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Akses penuh 48 jam</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Download untuk tonton offline</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Bebas iklan selama menonton</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Kualitas streaming terbaik</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Akses di semua perangkat</span>
+                    </div>
+                    {% else %}
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Akses langsung tanpa biaya</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Tidak perlu pembayaran</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Akses selamanya</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Cocok untuk pemula</span>
+                    </div>
+                    <div class="benefit-item d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="small">Konten berkualitas tetap gratis</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upgrade Suggestion for Free Videos -->
+            {% if not video.is_premium %}
+            <div class="card mt-4 border-primary">
+                <div class="card-body text-center">
+                    <i class="bi bi-star display-6 text-warning mb-3"></i>
+                    <h6 class="fw-bold">Ingin Pengalaman Lebih Baik?</h6>
+                    <p class="small text-muted mb-3">Upgrade ke video premium untuk fitur lengkap</p>
+                    <a href="{{ url_for('index') }}#premium" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-arrow-up-right me-1"></i>Jelajahi Premium
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Modal -->
+{% if video.is_premium %}
+<div class="modal fade" id="purchaseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-star-fill text-warning me-2"></i>Beli Akses Video Premium
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="fw-bold">{{ video.title }}</h6>
+                        <p class="text-muted mb-3">{{ video.description|default("Video premium dengan konten eksklusif.") }}</p>
+                        
+                        <div class="pricing-section mb-4">
+                            <h4 class="text-warning fw-bold">Rp {{ "%.0f"|format(video.price) }}</h4>
+                            <p class="text-muted small">Akses 48 jam dengan semua fitur premium</p>
+                        </div>
+
+                        <div class="benefits-list mb-4">
+                            <h6 class="fw-bold mb-3">Apa yang Anda dapatkan:</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        <small>Download video</small>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        <small>Bebas iklan</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        <small>Kualitas HD</small>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        <small>Akses multi-device</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="payment-info bg-light rounded p-3">
+                            <h6 class="fw-bold mb-3">Informasi Pembayaran</h6>
+                            
+                            {% if current_user.is_authenticated %}
+                                <div class="balance-info mb-3">
+                                    <small class="text-muted d-block">Saldo Anda:</small>
+                                    <h5 class="{{ 'text-success' if current_user.wallet_balance >= video.price else 'text-danger' }} fw-bold">
+                                        Rp {{ "%.0f"|format(current_user.wallet_balance) }}
+                                    </h5>
+                                </div>
+                                
+                                {% if current_user.wallet_balance >= video.price %}
+                                    <div class="alert alert-success small mb-3">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Saldo mencukupi
+                                    </div>
+                                    <div class="text-center">
+                                        <i class="bi bi-shield-check text-success display-6 mb-2"></i>
+                                        <p class="small text-muted">Akses akan diberikan otomatis setelah pembelian</p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning small mb-3">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Saldo tidak mencukupi
+                                    </div>
+                                    <div class="text-center">
+                                        <i class="bi bi-wallet2 text-warning display-6 mb-2"></i>
+                                        <p class="small text-muted">Top up saldo terlebih dahulu</p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info small">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Silakan login untuk membeli video ini
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.wallet_balance >= video.price %}
+                        <a href="{{ url_for('video.watch', video_id=video.id) }}" class="btn btn-warning">
+                            <i class="bi bi-currency-dollar me-1"></i>Beli Sekarang
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('payment.wallet') }}" class="btn btn-primary">
+                            <i class="bi bi-wallet2 me-1"></i>Top Up Saldo
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('user.login') }}" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login untuk Beli
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.premium-features {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.free-features {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.benefit-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.benefit-item:last-child {
+    border-bottom: none;
+}
+
+.card.border-warning {
+    border-width: 2px !important;
+}
+
+.card.border-success {
+    border-width: 2px !important;
+}
+
+.payment-info {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hover effects */
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: scale(1.1);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    border: none;
+    font-weight: 600;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ffb300 0%, #ffa000 100%);
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    border: none;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

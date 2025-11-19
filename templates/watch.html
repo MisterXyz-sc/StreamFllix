@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Menonton {{ video.title }} - StreamFlux{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Video Player -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Beranda</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('video.video_detail', video_id=video.id) }}" class="text-decoration-none">Detail</a></li>
+                                <li class="breadcrumb-item active text-light">Tonton</li>
+                            </ol>
+                        </nav>
+                        <div class="d-flex gap-2">
+                            <!-- FITUR: Tombol Fullscreen -->
+                            <button class="btn btn-sm btn-outline-light" id="fullscreenBtn" title="Fullscreen (F)">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0 position-relative">
+                    <!-- Loading Spinner -->
+                    <div id="videoLoading" class="position-absolute top-50 start-50 translate-middle">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading video...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ratio ratio-16x9">
+                        {% if video.embed_url %}
+                            <iframe src="{{ video.embed_url }}" 
+                                    frameborder="0" 
+                                    allowfullscreen
+                                    class="video-player"
+                                    id="videoIframe"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                        {% else %}
+                            <div class="d-flex justify-content-center align-items-center bg-dark text-light">
+                                <div class="text-center">
+                                    <i class="bi bi-play-circle display-1 text-muted"></i>
+                                    <p class="mt-3">Video player tidak tersedia</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Info -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="h4 fw-bold">{{ video.title }}</h2>
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                {% if video.is_premium %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-star-fill me-1"></i>Premium Video
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-play-circle me-1"></i>Gratis
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{{ url_for('video.video_detail', video_id=video.id) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Kembali
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.video-player {
+    border-radius: 8px;
+}
+
+.video-player:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff6b00 100%) !important;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videoIframe = document.getElementById('videoIframe');
+    const videoLoading = document.getElementById('videoLoading');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    // Hide loading ketika video load
+    if (videoIframe) {
+        videoIframe.addEventListener('load', function() {
+            if (videoLoading) {
+                videoLoading.style.display = 'none';
+            }
+        });
+    }
+
+    // FITUR: Fullscreen Functionality
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            if (videoIframe.requestFullscreen) {
+                videoIframe.requestFullscreen();
+            } else if (videoIframe.webkitRequestFullscreen) {
+                videoIframe.webkitRequestFullscreen();
+            } else if (videoIframe.msRequestFullscreen) {
+                videoIframe.msRequestFullscreen();
+            }
+            fullscreenBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+            fullscreenBtn.setAttribute('title', 'Keluar Fullscreen (F)');
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            fullscreenBtn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+            fullscreenBtn.setAttribute('title', 'Fullscreen (F)');
+        }
+    }
+
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    function handleFullscreenChange() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+            fullscreenBtn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+            fullscreenBtn.setAttribute('title', 'Fullscreen (F)');
+        }
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            toggleFullscreen();
+        }
+        
+        if (e.key === 'Escape') {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                toggleFullscreen();
+            }
+        }
+    });
+
+    // Tooltip
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

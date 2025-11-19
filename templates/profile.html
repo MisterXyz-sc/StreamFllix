@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>Profil Saya</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="30%">Email</th>
+                                    <td>{{ current_user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Role</th>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if current_user.role == 'admin' else 'primary' }}">
+                                            {{ current_user.role }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Saldo</th>
+                                    <td class="h5 text-success">Rp {{ "%.0f"|format(current_user.wallet_balance) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Bergabung</th>
+                                    <td>{{ current_user.created_at.strftime('%d %B %Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2">Akses Video Premium Aktif</h6>
+                            {% set active_accesses = [] %}
+                            {% for access in current_user.accesses %}
+                                <!-- PERBAIKAN: Gunakan template filter is_future -->
+                                {% if access.expires_at | is_future %}
+                                    {% set _ = active_accesses.append(access) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if active_accesses %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Video</th>
+                                                <th>Berlaku Sampai</th>
+                                                <th>Sisa Waktu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for access in active_accesses %}
+                                            <tr>
+                                                <td>{{ access.video.title }}</td>
+                                                <td>{{ access.expires_at|indonesia_datetime }}</td>
+                                                <td>
+                                                    <!-- PERBAIKAN: Gunakan template filter hours_remaining -->
+                                                    {% set hours_left = access.expires_at|hours_remaining %}
+                                                    <span class="badge bg-{{ 'success' if hours_left > 24 else 'warning' if hours_left > 1 else 'danger' }}">
+                                                        {{ "%.1f"|format(hours_left) }} jam
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center py-3">Tidak ada akses video premium aktif</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{{ url_for('payment.wallet') }}" class="btn btn-primary">
+                            <i class="bi bi-wallet2 me-1"></i>Kelola Wallet
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-house me-1"></i>Kembali ke Beranda
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

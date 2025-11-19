@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Login - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-play-circle-fill text-primary display-4"></i>
+                        <h2 class="mt-2 fw-bold">Login</h2>
+                        <p class="text-muted">Masuk ke akun StreamFlix Anda</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('user.login') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="text-muted">Belum punya akun? 
+                            <a href="{{ url_for('user.register') }}" class="text-primary text-decoration-none">Daftar di sini</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

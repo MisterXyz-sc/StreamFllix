@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Halaman Tidak Ditemukan - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="error-page">
+                <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                <h1 class="display-4 fw-bold mt-4">404</h1>
+                <h2 class="mb-4">Halaman Tidak Ditemukan</h2>
+                <p class="lead text-muted mb-5">
+                    Maaf, halaman yang Anda cari tidak ditemukan. 
+                    Mungkin halaman telah dipindahkan atau dihapus.
+                </p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-house me-2"></i>Kembali ke Beranda
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

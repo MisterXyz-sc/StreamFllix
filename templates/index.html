@@ -1,1 +1,1339 @@
+{% extends "base.html" %}
 
+{% block title %}StreamFlix - Nonton Video Gratis Tanpa VPN{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Hero Section -->
+    <div class="hero-section text-center py-5 mb-5 rounded-3 bg-gradient-primary position-relative overflow-hidden">
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.6); z-index: 1;"></div>
+        <div class="position-relative z-2">
+            <h1 class="display-4 fw-bold text-white mb-3">StreamFlix Premium</h1>
+            <p class="lead text-light mb-4">Nikmati pengalaman streaming terbaik dengan koleksi video eksklusif</p>
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('user.register') }}" class="btn btn-primary btn-lg px-4 me-3">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Daftar Sekarang
+                </a>
+                <a href="{{ url_for('user.login') }}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </a>
+            {% else %}
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <div class="bg-dark bg-opacity-50 rounded p-3 text-start">
+                        <small class="text-light">Saldo Anda</small>
+                        <h4 class="text-warning mb-0 user-balance">Rp {{ "{:,.0f}".format(current_user.wallet_balance) }}</h4>
+                    </div>
+                    <a href="{{ url_for('payment.wallet') }}" class="btn btn-warning btn-lg px-4 align-self-center">
+                        <i class="bi bi-wallet2 me-2"></i>Top Up Saldo
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ANNOUNCEMENTS SECTION - DITAMBAHKAN DI SINI -->{% if announcements %}
+<!-- Modal -->
+<div class="modal fade" id="announcementModal" tabindex="-1" aria-labelledby="announcementModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content announcement-modal">
+            <div class="modal-header announcement-header bg-primary text-white">
+                <h5 class="modal-title" id="announcementModalLabel">
+                    <i class="bi bi-megaphone-fill me-2"></i>Pengumuman Penting
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body announcement-body">
+                {% for announcement in announcements %}
+                <div class="announcement-item mb-4 pb-4 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="announcement-content" 
+                         style="white-space: pre-line; line-height: 1.6; 
+                                color: {{ announcement.text_color or '#ffffff' }};
+                                {% if announcement.text_style and announcement.text_style != 'normal' %}
+                                    {% if 'bold' in announcement.text_style %}font-weight: bold !important;{% endif %}
+                                    {% if 'italic' in announcement.text_style %}font-style: italic !important;{% endif %}
+                                    {% if 'underline' in announcement.text_style %}text-decoration: underline !important;{% endif %}
+                                {% endif %}">
+                        {{ announcement.content }}
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-clock me-1"></i>
+                        Diperbarui: {{ announcement.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% if announcement.text_style and announcement.text_style != 'normal' %}
+                        <span class="ms-2">
+                            <i class="bi bi-fonts me-1"></i>
+                            <span class="badge bg-dark">{{ announcement.text_style }}</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer announcement-footer-buttons">
+                <button type="button" class="btn btn-primary btn-paham" data-bs-dismiss="modal">
+                    <i class="bi bi-check-circle me-1"></i>Paham
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+    <!-- Video Categories Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-pills nav-fill" id="videoTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="free-tab" data-bs-toggle="tab" data-bs-target="#free" type="button" role="tab">
+                                <i class="bi bi-unlock me-2"></i>Video Gratis
+                                <span class="badge bg-success ms-2">{{ free_videos|length }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="premium-tab" data-bs-toggle="tab" data-bs-target="#premium" type="button" role="tab">
+                                <i class="bi bi-star me-2"></i>Video Premium
+                                <span class="badge bg-warning text-dark ms-2">{{ premium_videos|length }}</span>
+                            </button>
+                        </li>
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="my-access-tab" data-bs-toggle="tab" data-bs-target="#my-access" type="button" role="tab">
+                                <i class="bi bi-collection-play me-2"></i>Akses Saya
+                                <span class="badge bg-info ms-2">{{ active_accesses|length }}</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Category Filter -->
+                    <div class="p-3 border-bottom bg-dark">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filter Berdasarkan Kategori:</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <select class="form-select form-select-sm" id="categoryFilter" onchange="filterVideos()">
+                                    <option value="">Semua Kategori</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="videoTabsContent">
+                        <!-- Free Videos Tab -->
+                        <div class="tab-pane fade show active" id="free" role="tabpanel">
+                            <div class="p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h3 class="fw-bold mb-1 text-success">
+                                            <i class="bi bi-unlock me-2"></i>Video Gratis
+                                        </h3>
+                                        <p class="text-muted mb-0">Tonton langsung tanpa biaya - {{ free_videos|length }} video tersedia</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">Akses: Langsung</small>
+                                    </div>
+                                </div>
+
+                                {% if free_videos %}
+                                <div class="row" id="freeVideosContainer">
+                                    {% for video in free_videos %}
+                                    <div class="col-xl-3 col-lg-4 col-md-6 mb-4 video-item" data-category="{{ video.category_id or '' }}">
+                                        <div class="card video-card h-100 free-video">
+                                            <div class="position-relative">
+                                                <img src="{{ video.thumbnail_url or 'https://via.placeholder.com/300x169/198754/FFFFFF?text=Gratis' }}" 
+                                                     class="card-img-top" alt="{{ video.title }}" 
+                                                     style="height: 200px; object-fit: cover;">
+                                                <span class="position-absolute top-0 start-0 badge bg-success m-2">
+                                                    <i class="bi bi-unlock me-1"></i>Gratis
+                                                </span>
+                                                {% if video.category %}
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <span class="badge bg-primary bg-opacity-90">
+                                                        <i class="bi bi-tag me-1"></i>{{ video.category.name }}
+                                                    </span>
+                                                </div>
+                                                {% endif %}
+                                                <div class="position-absolute bottom-0 end-0 m-2">
+                                                    <span class="badge bg-dark bg-opacity-75">
+                                                        <i class="bi bi-clock me-1"></i>Langsung
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body d-flex flex-column">
+                                                <h5 class="card-title">{{ video.title }}</h5>
+                                                <p class="card-text text-muted small flex-grow-1">
+                                                    {{ video.description|default("Nikmati video berkualitas tinggi tanpa biaya.") }}
+                                                </p>
+                                                <div class="mt-auto">
+                                                    <div class="d-grid gap-2">
+                                                        <a href="{{ url_for('video.watch', video_id=video.id) }}" 
+                                                           class="btn btn-success btn-sm">
+                                                            <i class="bi bi-play-circle me-1"></i>Tonton Sekarang
+                                                        </a>
+                                                        <a href="{{ url_for('video.video_detail', video_id=video.id) }}" 
+                                                           class="btn btn-outline-secondary btn-sm">
+                                                            <i class="bi bi-info-circle me-1"></i>Detail
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-5">
+                                    <i class="bi bi-unlock display-1 text-muted"></i>
+                                    <h4 class="text-muted mt-3">Belum ada video gratis</h4>
+                                    <p class="text-muted">Admin belum menambahkan video gratis.</p>
+                                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                                    <a href="{{ url_for('admin.add_video') }}" class="btn btn-primary mt-2">
+                                        <i class="bi bi-plus-circle me-1"></i>Tambah Video Gratis
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+<!-- Premium Videos Tab -->
+<div class="tab-pane fade" id="premium" role="tabpanel">
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1 text-warning">
+                    <i class="bi bi-star me-2"></i>Video Premium
+                </h3>
+                <p class="text-muted mb-0">Konten eksklusif dengan kualitas terbaik - {{ premium_videos|length }} video tersedia</p>
+            </div>
+            <div class="text-end">
+                <small class="text-muted">Akses: 48 jam setelah pembelian</small>
+            </div>
+        </div>
+
+        {% if premium_videos %}
+        <div class="row" id="premiumVideosContainer">
+            {% for video in premium_videos %}
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4 video-item" data-category="{{ video.category_id or '' }}">
+                <div class="card video-card h-100 premium-video">
+                    <div class="position-relative">
+                        <!-- VIDEO THUMBNAIL (UPDATED) -->
+                        <div class="video-thumbnail" style="height: 200px; overflow: hidden; position: relative;">
+                            <video preload="metadata" class="thumbnail-video" style="width: 100%; height: 100%; object-fit: cover;">
+                                <source src="{{ video.embed_url }}" type="video/mp4">
+                                Your browser does not support video tag.
+                            </video>
+                            
+                            <!-- Play Overlay -->
+                            <div class="play-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+                                <div class="play-icon" style="background: rgba(255,255,255,0.9); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+                                        <path d="M8 5V19L19 12L8 5Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- Video Duration Text -->
+                            <div class="video-duration" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                {% if current_user.is_authenticated %}
+                                    {% set has_access = namespace(value=false) %}
+                                    {% for access in active_accesses %}
+                                        {% if access.video_id == video.id %}
+                                            {% if access.expires_at | is_future %}
+                                                {% set has_access.value = true %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if has_access.value %}
+                                    Tonton Sekarang
+                                    {% else %}
+                                    Klik untuk detail
+                                    {% endif %}
+                                {% else %}
+                                    Login untuk detail
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <span class="position-absolute top-0 end-0 badge bg-warning m-2">
+                            <i class="bi bi-star-fill me-1"></i>Premium
+                        </span>
+                        <div class="position-absolute top-0 start-0 m-2">
+                            <span class="badge bg-dark bg-opacity-75">
+                                Rp {{ "{:,.0f}".format(video.price) }}
+                            </span>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            {% set has_access = namespace(value=false) %}
+                            {% for access in active_accesses %}
+                                {% if access.video_id == video.id %}
+                                    <!-- PERBAIKAN: Gunakan template filter is_future -->
+                                    {% if access.expires_at | is_future %}
+                                        {% set has_access.value = true %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if has_access.value %}
+                            <div class="position-absolute bottom-0 start-0 m-2">
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Akses Aktif
+                                </span>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ video.title }}</h5>
+                        <p class="card-text text-muted small flex-grow-1">
+                            {{ video.description|default("Video premium dengan konten eksklusif dan kualitas terbaik.") }}
+                        </p>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="h5 text-warning mb-0">
+                                    Rp {{ "{:,.0f}".format(video.price) }}
+                                </span>
+                                <small class="text-muted">48 jam</small>
+                            </div>
+                            
+                            {% if current_user.is_authenticated %}
+                                {% set has_access = namespace(value=false) %}
+                                {% for access in active_accesses %}
+                                    {% if access.video_id == video.id %}
+                                        <!-- PERBAIKAN: Gunakan template filter is_future -->
+                                        {% if access.expires_at | is_future %}
+                                            {% set has_access.value = true %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if has_access.value %}
+                                    <a href="{{ url_for('video.watch', video_id=video.id) }}" 
+                                       class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-play-circle me-1"></i>Tonton Sekarang
+                                    </a>
+                                {% else %}
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('video.video_detail', video_id=video.id) }}" 
+                                           class="btn btn-warning btn-sm">
+                                            <i class="bi bi-cart me-1"></i>Beli & Tonton
+                                        </a>
+                                        <a href="{{ url_for('video.video_detail', video_id=video.id) }}" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-info-circle me-1"></i>Detail
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('user.login') }}" 
+                                       class="btn btn-warning btn-sm">
+                                        <i class="bi bi-star me-1"></i>Login untuk Beli
+                                    </a>
+                                    <a href="{{ url_for('video.video_detail', video_id=video.id) }}" 
+                                       class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-info-circle me-1"></i>Detail
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-star display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Belum ada video premium</h4>
+            <p class="text-muted">Admin belum menambahkan video premium.</p>
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <a href="{{ url_for('admin.add_video') }}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle me-1"></i>Tambah Video Premium
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+<!-- My Access Tab (Only for logged in users) -->
+{% if current_user.is_authenticated %}
+<div class="tab-pane fade" id="my-access" role="tabpanel">
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1 text-info">
+                    <i class="bi bi-collection-play me-2"></i>Akses Video Saya
+                </h3>
+                <p class="text-muted mb-0">Video premium yang sedang Anda miliki aksesnya - {{ active_accesses|length }} video aktif</p>
+            </div>
+            <div class="text-end">
+                <small class="text-muted">Berlaku 48 jam setelah pembelian</small>
+            </div>
+        </div>
+
+        {% if active_accesses %}
+        <div class="row" id="accessVideosContainer">
+            {% for access in active_accesses %}
+            {% set video = access.video %}
+            {% set hours_left = access.expires_at|hours_remaining %}
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4 video-item" data-category="{{ video.category_id or '' }}">
+                <div class="card video-card h-100 access-video">
+                    <div class="position-relative">
+                        <!-- VIDEO THUMBNAIL (UPDATED) -->
+                        <div class="video-thumbnail" style="height: 200px; overflow: hidden; position: relative;">
+                            <video preload="metadata" class="thumbnail-video" style="width: 100%; height: 100%; object-fit: cover;">
+                                <source src="{{ video.embed_url }}" type="video/mp4">
+                                Your browser does not support video tag.
+                            </video>
+                            
+                            <!-- Play Overlay -->
+                            <div class="play-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+                                <div class="play-icon" style="background: rgba(255,255,255,0.9); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+                                        <path d="M8 5V19L19 12L8 5Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- Video Duration Text -->
+                            <div class="video-duration" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                Sisa waktu: {{ "%.1f"|format(hours_left) }} jam
+                            </div>
+                        </div>
+                        
+                        <span class="position-absolute top-0 start-0 badge bg-info m-2">
+                            <i class="bi bi-collection-play me-1"></i>Akses Saya
+                        </span>
+                        {% if video.category %}
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-primary bg-opacity-90">
+                                <i class="bi bi-tag me-1"></i>{{ video.category.name }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        <div class="position-absolute top-0 end-0 m-2" style="margin-top: 35px !important;">
+                            <span class="badge bg-{{ 'success' if hours_left > 24 else 'warning' if hours_left > 1 else 'danger' }}">
+                                {{ "%.1f"|format(hours_left) }} jam
+                            </span>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 m-2">
+                            <span class="badge bg-dark bg-opacity-75">
+                                <i class="bi bi-calendar me-1"></i>{{ access.expires_at|indonesia_datetime }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ video.title }}</h5>
+                        <p class="card-text text-muted small flex-grow-1">
+                            {{ video.description|default("Video premium dengan akses aktif.") }}
+                        </p>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>Akses Aktif
+                                </span>
+                                <small class="text-{{ 'success' if hours_left > 24 else 'warning' if hours_left > 1 else 'danger' }}">
+                                    {{ "%.1f"|format(hours_left) }} jam lagi
+                                </small>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('video.watch', video_id=video.id) }}" 
+                                   class="btn btn-info btn-sm">
+                                    <i class="bi bi-play-circle me-1"></i>Tonton Sekarang
+                                </a>
+                                <a href="{{ url_for('video.video_detail', video_id=video.id) }}" 
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-info-circle me-1"></i>Detail Video
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-collection-play display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Belum ada akses video</h4>
+            <p class="text-muted">Anda belum memiliki akses ke video premium.</p>
+            <a href="#premium" class="btn btn-primary mt-2" onclick="switchToPremiumTab()">
+                <i class="bi bi-star me-1"></i>Jelajahi Video Premium
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #0a2647 0%, #0d6efd 100%);
+}
+
+/* Style untuk judul filter */
+h6.mb-0 {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+}
+
+/* Style untuk ikon filter */
+.bi-funnel {
+    color: #e74c3c;
+    font-size: 1.3rem;
+    margin-right: 10px;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Style untuk select dropdown */
+.form-select {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 10px 15px;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.08),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+/* Hover effect untuk select */
+.form-select:hover {
+    background: linear-gradient(145deg, #ffffff, #e9ecef);
+    border-color: #3498db;
+    box-shadow: 
+        0 6px 20px rgba(52, 152, 219, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+/* Focus effect untuk select */
+.form-select:focus {
+    background: linear-gradient(145deg, #ffffff, #e9ecef);
+    border-color: #2980b9;
+    box-shadow: 
+        0 0 0 4px rgba(52, 152, 219, 0.1),
+        0 8px 25px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+/* Style untuk option dropdown */
+.form-select option {
+    background: #ffffff;
+    color: #495057;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.form-select option:hover {
+    background: #3498db !important;
+    color: white !important;
+}
+
+.form-select option:checked {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    h6.mb-0 {
+        font-size: 1rem;
+        justify-content: center;
+        margin-bottom: 10px !important;
+    }
+    
+    .bi-funnel {
+        font-size: 1.1rem;
+        padding: 6px;
+        margin-right: 8px;
+    }
+    
+    .form-select {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+        border-radius: 10px;
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+h6.mb-0 {
+    animation: slideIn 0.6s ease-out;
+}
+
+.form-select {
+    animation: slideIn 0.6s ease-out 0.1s both;
+}
+
+/* Tab Styles */
+/* ===== LIGHTWEIGHT TAB BUTTON STYLES ===== */
+.card-header.bg-dark {
+    background: #1a1a1a !important;
+    border-bottom: 2px solid #2d1b69;
+    padding: 1rem;
+}
+
+.nav-pills.nav-fill {
+    gap: 0.5rem;
+}
+
+.nav-pills .nav-link {
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 0.875rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Video Gratis Tab */
+#free-tab.nav-link {
+    color: #75b798;
+    border-color: rgba(25, 135, 84, 0.3);
+}
+
+#free-tab.nav-link:hover {
+    background: rgba(25, 135, 84, 0.1);
+    color: #a3cfbb;
+    border-color: rgba(25, 135, 84, 0.6);
+    transform: translateY(-1px);
+}
+
+#free-tab.nav-link.active {
+    background: #198754;
+    color: white;
+    border-color: #198754;
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+/* Video Premium Tab */
+#premium-tab.nav-link {
+    color: #ffd54f;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+#premium-tab.nav-link:hover {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffe082;
+    border-color: rgba(255, 193, 7, 0.6);
+    transform: translateY(-1px);
+}
+
+#premium-tab.nav-link.active {
+    background: #ffc107;
+    color: #1a1a1a;
+    border-color: #ffc107;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+/* Akses Saya Tab */
+#my-access-tab.nav-link {
+    color: #6ea8fe;
+    border-color: rgba(13, 110, 253, 0.3);
+}
+
+#my-access-tab.nav-link:hover {
+    background: rgba(13, 110, 253, 0.1);
+    color: #9ec5fe;
+    border-color: rgba(13, 110, 253, 0.6);
+    transform: translateY(-1px);
+}
+
+#my-access-tab.nav-link.active {
+    background: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Badge Styles */
+.nav-link .badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+#free-tab .badge {
+    background: #198754 !important;
+}
+
+#premium-tab .badge {
+    background: #ffc107 !important;
+    color: #1a1a1a;
+}
+
+#my-access-tab .badge {
+    background: #0d6efd !important;
+}
+
+.nav-link.active .badge {
+    background: white !important;
+    color: #1a1a1a;
+}
+
+/* Icons */
+.nav-link i {
+    font-size: 1rem;
+}
+
+/* Tab Content Animation */
+.tab-pane.fade.show.active {
+    animation: simpleFade 0.3s ease;
+}
+
+@keyframes simpleFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav-pills .nav-link {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .nav-link .badge {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-header.bg-dark {
+        padding: 0.75rem;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.video-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.free-video {
+    border-left: 4px solid #198754;
+}
+
+.premium-video {
+    border-left: 4px solid #ffc107;
+}
+
+.access-video {
+    border-left: 4px solid #0dcaf0;
+}
+
+/* Announcement Modal Styling */
+.announcement-modal {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #1e3c72, #2a5298);
+    color: white;
+}
+
+.announcement-header {
+    background: rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.announcement-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, #ff6b35, #ff8e53);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.announcement-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(45deg, #fff, #e3f2fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.announcement-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    color: #e3f2fd;
+}
+
+.announcement-body {
+    padding: 2rem;
+    background: rgba(255,255,255,0.05);
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.announcement-content-wrapper {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.announcement-content {
+    letter-spacing: 1px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.7;
+    color: #e3f2fd;
+    font-size: 0.95rem;
+}
+
+/* Styling untuk konten markdown */
+.announcement-content h1 {
+    color: #ff6b35;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ff6b35;
+}
+
+.announcement-content h2 {
+    color: #4fc3f7;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 1.25rem 0 0.75rem 0;
+}
+
+.announcement-content h3 {
+    color: #ffd54f;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.announcement-content strong {
+    color: #ff6b6b;
+    font-weight: 700;
+}
+
+.announcement-content em {
+    color: #81c784;
+    font-style: italic;
+}
+
+.announcement-content ul {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.announcement-content ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.announcement-content li {
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.announcement-content ul li:before {
+    content: "•";
+    color: #4fc3f7;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.announcement-content ol li {
+    counter-increment: list-counter;
+}
+
+.announcement-content ol li:before {
+    content: counter(list-counter) ".";
+    color: #4fc3f7;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.announcement-content hr {
+    border: 0;
+    border-top: 2px dashed rgba(255,255,255,0.3);
+    margin: 2rem 0;
+    opacity: 0.6;
+}
+
+.announcement-content blockquote {
+    border-left: 4px solid #ff6b35;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    background: rgba(255,107,53,0.1);
+    padding: 1rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+}
+
+.announcement-content code {
+    background: rgba(0,0,0,0.3);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif ;
+    color: #ffd54f;
+}
+
+.announcement-content pre {
+    background: rgba(0,0,0,0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.announcement-content pre code {
+    background: none;
+    padding: 0;
+    color: #e3f2fd;
+}
+
+.announcement-footer {
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.announcement-footer-buttons {
+    background: rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(255,255,255,0.2);
+    border-radius: 0 0 15px 15px;
+    padding: 1.5rem;
+}
+
+.btn-paham {
+    background: linear-gradient(45deg, #00c853, #64dd17);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+    color: white;
+}
+
+.btn-paham:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,200,83,0.4);
+    background: linear-gradient(45deg, #00e676, #76ff03);
+    color: white;
+}
+
+/* Close button styling */
+.btn-close-custom {
+    filter: invert(1) brightness(2);
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.btn-close-custom:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Scrollbar styling */
+.announcement-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.announcement-body::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+.announcement-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #ff6b35, #ff8e53);
+    border-radius: 3px;
+}
+
+.announcement-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #ff8e53, #ff6b35);
+}
+
+/* Backdrop styling */
+.modal-backdrop.announcement-backdrop {
+    background: rgba(0,0,0,0.7);
+}
+
+.modal-backdrop.announcement-backdrop.show {
+    opacity: 0.9;
+}
+
+/* Animation for modal entrance */
+@keyframes announcementSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal.fade .announcement-modal {
+    animation: announcementSlideIn 0.3s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .announcement-modal {
+        margin: 1rem;
+    }
+    
+    .announcement-header {
+        padding: 1rem;
+    }
+    
+    .announcement-body {
+        padding: 1rem;
+    }
+    
+    .announcement-content-wrapper {
+        padding: 1.5rem;
+    }
+    
+    .announcement-title {
+        font-size: 1.3rem;
+    }
+    
+    .btn-paham {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .announcement-modal {
+        background: linear-gradient(145deg, #0d1b2a, #1b263b);
+    }
+}
+
+/* Print styling */
+@media print {
+    .announcement-modal {
+        box-shadow: none;
+        background: white !important;
+        color: black !important;
+    }
+    
+    .announcement-content {
+        color: black !important;
+    }
+    
+    .btn-paham {
+        display: none;
+    }
+}
+
+/* Video Card Styles */
+.free-video {
+    border-left: 4px solid #198754;
+}
+
+.premium-video {
+    border-left: 4px solid #ffc107;
+}
+
+.access-video {
+    border-left: 4px solid #0dcaf0;
+}
+
+.video-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.video-card .card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.video-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* Card header background */
+.card-header.bg-dark {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    border-bottom: none;
+}
+
+/* Tab content animation */
+.tab-content {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .nav-pills .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .hero-section .display-4 {
+        font-size: 2rem;
+    }
+}
+
+/* Filter styles */
+.category-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.video-item {
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchToPremiumTab() {
+    const premiumTab = new bootstrap.Tab(document.getElementById('premium-tab'));
+    premiumTab.show();
+}
+
+function switchToFreeTab() {
+    const freeTab = new bootstrap.Tab(document.getElementById('free-tab'));
+    freeTab.show();
+}
+
+function switchToMyAccessTab() {
+    const myAccessTab = new bootstrap.Tab(document.getElementById('my-access-tab'));
+    myAccessTab.show();
+}
+
+// Filter videos by category
+function filterVideos() {
+    const categoryId = document.getElementById('categoryFilter').value;
+    const videoItems = document.querySelectorAll('.video-item');
+    
+    videoItems.forEach(item => {
+        const videoCategory = item.dataset.category || '';
+        if (!categoryId || videoCategory === categoryId) {
+            item.style.display = 'block';
+            // Add animation
+            item.style.opacity = '0';
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transition = 'opacity 0.3s ease';
+            }, 50);
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Update counts
+    updateVideoCounts();
+}
+
+// Update video counts after filtering
+function updateVideoCounts() {
+    const categoryId = document.getElementById('categoryFilter').value;
+    
+    // Free videos count
+    const freeVideos = document.querySelectorAll('#freeVideosContainer .video-item');
+    const visibleFreeVideos = Array.from(freeVideos).filter(item => {
+        const videoCategory = item.dataset.category || '';
+        return !categoryId || videoCategory === categoryId;
+    });
+    
+    // Premium videos count  
+    const premiumVideos = document.querySelectorAll('#premiumVideosContainer .video-item');
+    const visiblePremiumVideos = Array.from(premiumVideos).filter(item => {
+        const videoCategory = item.dataset.category || '';
+        return !categoryId || videoCategory === categoryId;
+    });
+    
+    // Access videos count
+    const accessVideos = document.querySelectorAll('#accessVideosContainer .video-item');
+    const visibleAccessVideos = Array.from(accessVideos).filter(item => {
+        const videoCategory = item.dataset.category || '';
+        return !categoryId || videoCategory === categoryId;
+    });
+    
+    // Update badge counts (optional - bisa diaktifkan jika mau)
+    // document.querySelector('#free-tab .badge').textContent = visibleFreeVideos.length;
+    // document.querySelector('#premium-tab .badge').textContent = visiblePremiumVideos.length;
+    // if (document.querySelector('#my-access-tab .badge')) {
+    //     document.querySelector('#my-access-tab .badge').textContent = visibleAccessVideos.length;
+    // }
+}
+
+// Show announcement modal
+function showAnnouncementModal() {
+    const announcementModal = new bootstrap.Modal(document.getElementById('announcementModal'));
+    announcementModal.show();
+}
+
+// Add smooth scrolling for tab links
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle internal tab links
+    const tabLinks = document.querySelectorAll('a[href="#free"], a[href="#premium"], a[href="#my-access"]');
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetTab = this.getAttribute('href').substring(1) + '-tab';
+            const tab = new bootstrap.Tab(document.getElementById(targetTab));
+            tab.show();
+        });
+    });
+    
+    // Update active tab based on URL hash
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        if (['free', 'premium', 'my-access'].includes(hash)) {
+            const tab = new bootstrap.Tab(document.getElementById(hash + '-tab'));
+            tab.show();
+        }
+    }
+    
+    // Reset filter when changing tabs
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function() {
+            // Optional: Reset filter when switching tabs
+            // document.getElementById('categoryFilter').value = '';
+            // filterVideos();
+        });
+    });
+    
+    // ANNOUNCEMENT MODAL FUNCTIONALITY - SELALU MUNCUL
+    {% if announcements %}
+    // Tampilkan modal otomatis setelah halaman load
+    // SELALU MUNCUL tanpa kondisi localStorage
+    setTimeout(() => {
+        const announcementModalElement = document.getElementById('announcementModal');
+        const announcementModal = new bootstrap.Modal(announcementModalElement);
+        
+        // Tambahkan efek animasi sebelum show
+        announcementModalElement.addEventListener('show.bs.modal', function () {
+            const modalContent = this.querySelector('.modal-content');
+            modalContent.style.transform = 'scale(0.8) translateY(-50px)';
+            modalContent.style.opacity = '0';
+            modalContent.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
+        
+        announcementModalElement.addEventListener('shown.bs.modal', function () {
+            const modalContent = this.querySelector('.modal-content');
+            setTimeout(() => {
+                modalContent.style.transform = 'scale(1) translateY(0)';
+                modalContent.style.opacity = '1';
+            }, 50);
+        });
+        
+        // Efek saat modal akan ditutup
+        announcementModalElement.addEventListener('hide.bs.modal', function () {
+            const modalContent = this.querySelector('.modal-content');
+            modalContent.style.transform = 'scale(0.9) translateY(20px)';
+            modalContent.style.opacity = '0';
+            modalContent.style.transition = 'all 0.3s ease';
+        });
+        
+        announcementModal.show();
+    }, 800);
+    {% endif %}
+    
+    // Handle manual announcement button click
+    const manualAnnouncementBtn = document.getElementById('manualAnnouncementBtn');
+    if (manualAnnouncementBtn) {
+        manualAnnouncementBtn.addEventListener('click', function() {
+            const announcementModal = new bootstrap.Modal(document.getElementById('announcementModal'));
+            announcementModal.show();
+        });
+    }
+});
+</script>
+{% endblock %}

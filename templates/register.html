@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Register - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-plus-fill text-primary display-4"></i>
+                        <h2 class="mt-2 fw-bold">Daftar</h2>
+                        <p class="text-muted">Buat akun StreamFlix baru</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('user.register') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Konfirmasi Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-person-plus me-2"></i>Daftar
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="text-muted">Sudah punya akun? 
+                            <a href="{{ url_for('user.login') }}" class="text-primary text-decoration-none">Login di sini</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
